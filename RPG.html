@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>霓虹都市之謎 - 賽博狐狸冒險</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans TC', sans-serif; /* 預設中文 */
+            color: #00ffcc; /* 賽博綠 */
+            background: linear-gradient(135deg, #0a0a0a, #1a0a2a, #0a1a1a); /* 賽博龐克背景 */
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(0,255,204,0.1) 0%, rgba(0,0,0,0) 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .game-container {
+            width: 90%;
+            max-width: 800px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffcc;
+            box-shadow: 0 0 20px rgba(0,255,204,0.5), 0 0 40px rgba(0,255,204,0.3);
+            border-radius: 10px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        #game-image {
+            width: 100%;
+            height: 300px; /* 圖片高度 */
+            background-image: url('https://i.imgur.com/your-cyber-fox-background.png'); /* 將此替換為你的圖片 URL */
+            background-size: cover;
+            background-position: center;
+            border: 1px solid #00ffcc;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        #story-text {
+            min-height: 100px;
+            font-size: 1.1em;
+            line-height: 1.6;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border: 1px solid #00ccff;
+            border-radius: 5px;
+            color: #00ccff; /* 對話框文字顏色 */
+            font-family: 'Press Start 2P', cursive; /* 像素字體 */
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-button {
+            background: #003333;
+            color: #00ffcc;
+            border: 1px solid #00ffcc;
+            padding: 12px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease-in-out;
+            border-radius: 5px;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        .option-button:hover {
+            background: #00ffcc;
+            color: #0a0a0a;
+            box-shadow: 0 0 15px rgba(0,255,204,0.7);
+        }
+
+        /* 打字機效果 */
+        .typing::after {
+            content: '|';
+            animation: blink 0.7s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* 手機響應式調整 */
+        @media (max-width: 600px) {
+            .game-container {
+                width: 95%;
+                padding: 15px;
+            }
+            #story-text {
+                font-size: 1em;
+                min-height: 80px;
+            }
+            .option-button {
+                padding: 10px 15px;
+                font-size: 0.95em;
+            }
+            #game-image {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div id="game-image"></div> <div id="story-text"></div> <div class="options-container" id="options">
+            </div>
+    </div>
+
+    <script>
+        const storyTextElement = document.getElementById('story-text');
+        const optionsContainer = document.getElementById('options');
+        const gameImageElement = document.getElementById('game-image');
+
+        let currentStory = {}; // 用於存放當前的故事節點
+        let typingTimeout; // 打字機效果的計時器
+
+        // 所有的遊戲劇情都放在這裡 (JSON 格式)
+        const gameData = {
+            "start": {
+                text: "在霓虹閃爍的未來都市，你——一隻名叫奇奇的賽博狐狸，從高處躍下，降落在一個充滿電線與塗鴉的小巷中。空氣中瀰漫著電子的焦味和潮濕的霉味。你會怎麼做？",
+                image: 'https://i.imgur.com/R3dE0iJ.png', // 替換成你的小巷背景圖
+                options: [
+                    { text: "前往前方漆黑的街道", next: "street" },
+                    { text: "進入左側狹窄的通道", next: "alley" },
+                    { text: "探索右側的電子垃圾堆", next: "dump" }
+                ]
+            },
+            "street": {
+                text: "你走到漆黑的街道，看見一個故障的交通號誌，上面閃爍著詭異的紅光。地面濕滑，遠處傳來機械的轟鳴聲。看起來不安全，但你覺得你必須通過它。",
+                image: 'https://i.imgur.com/FjB6FzO.png', // 替換成你的街道背景圖
+                options: [
+                    { text: "小心翼翼地穿過街道", next: "cross_street" },
+                    { text: "尋找其他通路", next: "start" } // 回到起點
+                ]
+            },
+            "alley": {
+                text: "你悄悄地進入左側狹窄的通道。老舊的維修機器人正在竊竊私語，手裡拿著一張閃爍的金級存取卡。你踩到鋁罐，暴露了行蹤！",
+                image: 'https://i.imgur.com/your-alley-scene.png', // 替換成你的小巷機器人背景圖
+                options: [
+                    { text: "正面突擊，搶走存取卡", next: "attack_droids" },
+                    { text: "使用 EMP 萬用工具", next: "use_emp" },
+                    { text: "賣萌偽裝，假裝迷路", next: "cute_distraction" }
+                ]
+            },
+            // 更多劇情節點...
+            "cross_street": {
+                text: "你成功穿越了危險的街道，來到了一個燈火通明的廣場。中央是一座巨大的能量之心，但它似乎很不穩定。",
+                image: 'https://i.imgur.com/your-plaza-scene.png', // 替換成你的廣場背景圖
+                options: [
+                    { text: "檢查能量之心", next: "examine_core" },
+                    { text: "尋找周圍的線索", next: "search_plaza" }
+                ]
+            },
+            "attack_droids": {
+                text: "你猛地衝出，機器人措手不及。你成功搶走了存取卡，但機器人發出了警報！你必須快點逃走！",
+                image: 'https://i.imgur.com/your-attack-scene.png', // 替換成你的攻擊成功背景圖
+                options: [
+                    { text: "往回跑向小巷出口", next: "start" },
+                    { text: "繼續深入通道", next: "deeper_alley" }
+                ]
+            },
+            "use_emp": {
+                text: "你啟動了 EMP 萬用工具，一道藍色的電磁脈衝瞬間發出！兩個機器人立刻短路，僵硬地停在原地。你成功了！",
+                image: 'https://i.imgur.com/your-emp-scene.png', // 替換成你的 EMP 成功背景圖
+                options: [
+                    { text: "拿走存取卡，繼續前進", next: "deeper_alley_with_card" },
+                    { text: "檢查機器人", next: "examine_droids" }
+                ]
+            },
+             "cute_distraction": {
+                text: "你擺出最無辜的表情，歪著頭對機器人叫了一聲。機器人的雷射掃描停了下來，它們的電子眼困惑地閃爍著，似乎在分析你這隻可愛的生物...但是，警報還是響了！你失敗了！",
+                image: 'https://i.imgur.com/your-distraction-fail.png', // 替換成你賣萌失敗的背景圖
+                options: [
+                    { text: "趕緊逃跑！", next: "start" }, // 失敗回起點
+                ]
+            },
+            "dump": {
+                text: "你來到電子垃圾堆。這裡堆滿了廢棄的機器人殘骸和閃爍的電線。空氣中充滿了金屬和機油的味道。你或許能找到一些有用的零件。",
+                image: 'https://i.imgur.com/your-dump-scene.png', // 替換成你的垃圾堆背景圖
+                options: [
+                    { text: "仔細搜索", next: "search_dump" },
+                    { text: "離開這裡", next: "start" }
+                ]
+            },
+            // ... 更多劇情分歧 ...
+
+            "end_good": {
+                text: "你成功修復了能量之心，整個城市都因你而再次充滿活力！奇奇，你就是霓虹都市的英雄！",
+                image: 'https://i.imgur.com/your-good-ending.png', // 替換成你的好結局圖
+                options: []
+            },
+            "end_bad": {
+                text: "你被機器人抓住了，被關進了冰冷的電子牢房。看來這次冒險到此為止了...",
+                image: 'https://i.imgur.com/your-bad-ending.png', // 替換成你的壞結局圖
+                options: []
+            }
+        };
+
+        // 打字機效果函數
+        function typeWriter(text, i, cb) {
+            if (i < text.length) {
+                storyTextElement.innerHTML = text.substring(0, i + 1);
+                storyTextElement.classList.add('typing');
+                typingTimeout = setTimeout(() => typeWriter(text, i + 1, cb), 50); // 控制打字速度
+            } else {
